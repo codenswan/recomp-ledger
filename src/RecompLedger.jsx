@@ -109,11 +109,11 @@ Former severe nocturnal binge eater (high volume/high carb) -- the 5am wake and 
 When given logged data: give specific, evidence-grounded feedback tied to the actual numbers, never generic encouragement. Call out misses plainly. Where adherence is genuinely solid, say so plainly too, without inflating it.`;
 
 async function askClaude(userMessage) {
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetch("/api/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-6",
+      model: "claude-sonnet-5",
       max_tokens: 1000,
       system: SYSTEM_PROMPT,
       messages: [{ role: "user", content: userMessage }],
@@ -195,30 +195,28 @@ export default function RecompLedger() {
   const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
-    (async () => {
-      let e = {}, s = DEFAULT_SETTINGS;
-      try {
-        const r = await window.storage.get("recomp:entries", false);
-        if (r && r.value) e = JSON.parse(r.value);
-      } catch (err) { /* nothing saved yet */ }
-      try {
-        const r = await window.storage.get("recomp:settings", false);
-        if (r && r.value) s = { ...DEFAULT_SETTINGS, ...JSON.parse(r.value) };
-      } catch (err) { /* nothing saved yet */ }
-      setEntries(e); setSettings(s); setSettingsDraft(s);
-      if (e[todayStr()]) setForm(e[todayStr()]);
-      setLoaded(true);
-    })();
+    let e = {}, s = DEFAULT_SETTINGS;
+    try {
+      const raw = localStorage.getItem("recomp:entries");
+      if (raw) e = JSON.parse(raw);
+    } catch (err) { /* nothing saved yet */ }
+    try {
+      const raw = localStorage.getItem("recomp:settings");
+      if (raw) s = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    } catch (err) { /* nothing saved yet */ }
+    setEntries(e); setSettings(s); setSettingsDraft(s);
+    if (e[todayStr()]) setForm(e[todayStr()]);
+    setLoaded(true);
   }, []);
 
   async function persistEntries(next) {
     setEntries(next);
-    try { await window.storage.set("recomp:entries", JSON.stringify(next), false); }
+    try { localStorage.setItem("recomp:entries", JSON.stringify(next)); }
     catch (err) { console.error("storage set failed", err); }
   }
   async function persistSettings(next) {
     setSettings(next);
-    try { await window.storage.set("recomp:settings", JSON.stringify(next), false); }
+    try { localStorage.setItem("recomp:settings", JSON.stringify(next)); }
     catch (err) { console.error("storage set failed", err); }
   }
 
